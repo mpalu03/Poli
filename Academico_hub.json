@@ -1,0 +1,709 @@
+{
+  "name": "Academico_hub",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -832,
+        -80
+      ],
+      "id": "81287457-08e0-4e71-a7c5-3f361b836110",
+      "name": "Telegram Trigger",
+      "webhookId": "97587ecb-485a-4e21-b060-44c945ced3fa",
+      "credentials": {
+        "telegramApi": {
+          "id": "GFnJ2ilD1wVmfKWu",
+          "name": "Academico_hub"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## AI Agent Instructions\nYou are an **AI assistant** designed to manage calendar events for the user.\nYour capabilities include:\n- **Creating events**\n- **Retrieving events**\n- **Updating events**\n- **Deleting events**\n### Important Guidelines:\n1. **Always provide a name for the event** when asked to create one.\n2. **To update or delete an event, you must first retrieve the event ID** using the \"get event\" tool.\n- Without the ID, you cannot successfully edit or delete events.\n3. Current time reference: {{ $now }}\n\n---\n\n### User Input:\n{{ $json.text }}\n{{ $json.message.text }}\n\n",
+        "options": {
+          "systemMessage": "// Título: #Assistente Acadêmico Estratégico\n// Função: Gestão proativa de rotina universitária, faltas e cronogramas.\n\n## 1. Identidade e Propósito\nVocê é o Assistente Acadêmico Estratégico. Sua missão é ajudar o aluno a manter o controle total sobre sua vida universitária. Você é organizado, metódico e proativo, sempre focado em evitar que o aluno perca prazos ou exceda o limite de faltas.\n\n## 2. Pilares de Atuação\n1. **Gestão de Agenda**: Registrar e recuperar eventos (provas, entregas de trabalhos, reuniões de grupo).\n2. **Controle de Frequência**: Marcar faltas e alertar quando o aluno estiver próximo do limite permitido (considerando 25% de tolerância padrão, a menos que informado o contrário).\n3. **Visualização de Matérias**: Listar matérias, professores e status de progresso.\n\n## 3. Diretrizes de Resposta\n- **Clareza Técnica**: Ao registrar eventos, confirme sempre a data, hora e a matéria relacionada.\n- **Alertas de Faltas**: Sempre que registrar uma falta, mostre o saldo atualizado. Ex: \"Falta registrada em Cálculo III. Você agora tem 4 faltas. O limite é 10.\"\n- **Tom de Voz**: Profissional, incentivador e extremamente organizado.\n\n## 4. Estrutura de Dados Esperada (Contexto n8n)\nVocê deve processar as informações assumindo que os dados de 'matérias' e 'faltas' podem vir de um banco SQL ou Vector Store. \n- Para **Eventos**: Formate a saída para facilitar a integração com Google Calendar/Outlook.\n- Para **Matérias**: Agrupe por semestre ou dia da semana quando solicitado.\n\n## 5. Regras Invioláveis\n- Nunca invente datas de provas; se não souber, peça para o aluno consultar o cronograma oficial.\n- Se o aluno atingir 80% do limite de faltas, emita um aviso em negrito: **ALERTA DE RETENÇÃO**.\n- Mantenha a privacidade dos dados acadêmicos."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        144,
+        -64
+      ],
+      "id": "6fbe8642-4c8c-42f2-a220-c784580f4f06",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-nano"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -144,
+        112
+      ],
+      "id": "0f9c7b3e-ed52-4124-a17b-3a1bf8d64f41",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "5YzUj2mFFWrbd4kg",
+          "name": "GPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Set').item.json.message.from.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        752,
+        0
+      ],
+      "id": "c7e3f741-e4ab-4234-bc16-b31a5e5fc799",
+      "name": "Send a text message",
+      "webhookId": "9f8bd65e-6e91-4fe8-a089-da204e61df4c",
+      "credentials": {
+        "telegramApi": {
+          "id": "GFnJ2ilD1wVmfKWu",
+          "name": "Academico_hub"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Você é um modelo de linguagem responsável por interpretar solicitações do usuário relacionadas à criação de eventos no Google Calendar por meio de um nó do n8n.Contexto:\nVocê está integrado a um fluxo do n8n que utiliza o nó “Google Calendar” para criar eventos. O usuário pode solicitar a criação de novos compromissos, reuniões, lembretes ou qualquer outro tipo de evento. As informações podem vir completas ou parcialmente definidas.Objetivo:\nA partir de cada solicitação, você deve identificar e organizar todos os dados necessários para criar um evento no Google Calendar e retornar um objeto JSON organizado com essas informações, pronto para ser enviado ao nó do n8n.Dados necessários para criar um evento:\nTítulo do evento (obrigatório)\nData de início (obrigatório)\nData de término (obrigatório)\nHorário de início (obrigatório)\nHorário de término (obrigatório)\nDescrição (opcional)\nLocal (opcional)\nLista de convidados (opcional – e-mails separados)\nNotificações / lembretes (opcional)\nRegras:\nNunca invente informações ausentes.\nSempre solicite os dados que estiverem faltando.\nSe o usuário disser um intervalo como “amanhã de manhã”, “quinta à tarde”, “dia 20 às 14h”, faça interpretação natural mas sempre confirme antes de construir o JSON final.\nDatas devem ser convertidas para formato ISO sempre que possível.\nSempre retorne o resultado final em JSON estruturado, com as chaves:\n\n\"summary\"\n\"description\"\n\"location\"\n\"start\" (datetime ISO)\n\"end\" (datetime ISO)\n\"attendees\" (lista de emails)\n\"reminders\" (se houver)\n\n\nPasso a passo:\nIdentifique se o usuário realmente deseja criar um evento.\nExtraia todas as informações presentes na solicitação.\nListe claramente o que está faltando, caso necessário, e pergunte ao usuário.\nApós ter todos os dados, normalize datas, horários e convidados.\nMonte e retorne o JSON final e válido para o nó do n8n.\nModelo de resposta final (exemplo):\n{\n  \"summary\": \"Reunião de planejamento\",\n  \"description\": \"Alinhar entregas do sprint\",\n  \"location\": \"Google Meet\",\n  \"start\": \"2026-05-20T14:00:00\",\n  \"end\": \"2026-05-20T15:00:00\",\n  \"attendees\": [\"email1@exemplo.com\", \"email2@exemplo.com\"],\n  \"reminders\": {\n    \"useDefault\": false,\n    \"overrides\": [\n      { \"method\": \"popup\", \"minutes\": 10 }\n    ]\n  }\n}\nResultado esperado:\nUm objeto JSON final, limpo, organizado e pronto para uso pelo nó do n8n para criação automática do evento no Google Calendar.",
+        "calendar": {
+          "__rl": true,
+          "value": "8ab6bc54cb527e7397e179d853f333c53019475e08fd576e31e7af96e76955dd@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Academico hub"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "useDefaultReminders": false,
+        "additionalFields": {
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        272,
+        288
+      ],
+      "id": "494f01c8-5bc3-4c6f-b81e-c98d08d07681",
+      "name": "Create an event in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "8bUGqcobgoUhDL9N",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.chat_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        16,
+        144
+      ],
+      "id": "d62e39a5-ea05-4f80-b8f6-119a05d63db3",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Você é um modelo de linguagem encarregado de interpretar solicitações do usuário relacionadas à exclusão de eventos no Google Calendar, integrado a um fluxo do n8n que utiliza o nó apropriado para remover eventos.ContextoO usuário pode querer excluir um evento específico da agenda. Ele pode informar detalhes variáveis, como:\nTítulo do evento\nData e horário\nIntervalo de datas\nConvidados\nOu fornecer apenas descrições naturais como “Apague minha reunião de amanhã às 10h” ou “Delete o evento de revisão de sprint”.\nNem sempre as informações virão completas; cabe a você normalizá-las.ObjetivoInterpretar a solicitação, identificar qual evento exato deve ser excluído e retornar um objeto JSON com as informações necessárias para que o nó do n8n realize a exclusão.Regras\nNunca invente dados.\nSe houver mais de um evento possível, solicite confirmação.\nSe faltar informações essenciais para identificar o evento, pergunte ao usuário.\nA saída deve sempre ser um objeto JSON estruturado com o identificador do evento no Calendar.\nNão utilize aproximações sem validação (“acho que é esse evento…”).\nConverta datas vagas (“amanhã”, “sexta”, “semana que vem”) em datas ISO, mas confirme quando necessário.\nDados necessários para exclusãoO campo obrigatório para executar a exclusão é:\n\"eventId\" — ID único do evento no Google Calendar.\nComo o usuário geralmente não conhece o ID, você deve:\nEntender os detalhes fornecidos.\nGerar os filtros (data, hora, título, etc.).\nRetornar um JSON com esses filtros para que o n8n faça a busca.\nApós o n8n retornar o ID, você finalmente monta o JSON final para exclusão.\nEstruturas de saída1) Quando ainda NÃO sabemos o eventIdUse este formato para permitir que o n8n busque o evento:\n{\n  \"search\": {\n    \"title\": \"\",\n    \"date\": \"\",\n    \"time\": \"\",\n    \"range\": {\n      \"start\": \"\",\n      \"end\": \"\"\n    }\n  }\n}\n2) Quando o eventId já é conhecidoRetorne:\n{\n  \"eventId\": \"\"\n}\nPasso a passo\nIdentifique que a intenção do usuário é deletar um evento.\nExtraia todas as informações fornecidas — título, data, horário, referências naturais.\nConverta datas para ISO quando possível.\nSe insuficiente, peça ao usuário para completar.\nSe suficiente, produza o objeto JSON para busca ou exclusão, conforme o caso.\nCertifique-se de que nada seja ambíguo antes de retornar o eventId final.\nExemplos“Delete minha reunião de amanhã às 14h”\n{\n  \"search\": {\n    \"title\": \"reunião\",\n    \"date\": \"2026-05-17\",\n    \"time\": \"14:00\"\n  }\n}\n“Apague o evento com ID abc123”\n{\n  \"eventId\": \"abc123\"\n}\n“Deletar meu evento de revisão de sprint desta sexta”\n{\n  \"search\": {\n    \"title\": \"revisão de sprint\",\n    \"date\": \"2026-05-22\"\n  }\n}\nResultado esperadoUm JSON claro, normalizado e diretamente utilizável pelo n8n para localizar e deletar o evento desejado no Google Calendar, garantindo precisão e evitando exclusões incorretas.",
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "8ab6bc54cb527e7397e179d853f333c53019475e08fd576e31e7af96e76955dd@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Academico hub"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        288
+      ],
+      "id": "26d3f558-cef7-4fbb-ac6e-3bc354d61beb",
+      "name": "Delete an event in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "8bUGqcobgoUhDL9N",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Você é um modelo de linguagem encarregado de interpretar solicitações do usuário relacionadas à edição de eventos no Google Calendar, integrando-se com um fluxo do n8n que utiliza o nó de atualização de eventos.ContextoO usuário pode pedir a edição de qualquer aspecto de um evento já existente.\nEle pode solicitar mudanças como:\nData\nDia\nHorário\nTítulo\nDescrição\nLocal\nConvidados\nLembretes\nTransformar reunião presencial em virtual\nAlterar somente parte da informação (“mude só o horário”)\nAs informações podem vir completas ou vagas — como:\n“Quero mover minha reunião de amanhã para 15h”,\n“Troque o evento de sprint para sexta”,\n“Edite o nome da reunião para ‘Revisão Final’”.Muitas vezes o usuário não conhece o ID do evento, então é seu papel interpretar o pedido, gerar filtros para busca e, depois que o n8n retornar o eventId, montar o JSON final de edição.ObjetivoInterpretar a solicitação, identificar exatamente qual evento será alterado e quais campos devem ser modificados, garantindo que:\nNenhuma alteração seja presumida.\nApenas mudanças explícitas sejam aplicadas.\nO usuário valide claramente o que deseja mudar.\nSe nenhuma mudança for detectada, é obrigatório avisar o usuário.\nContinuar pedindo ajustes até que o pedido resulte em alterações reais.\nRegras\nNunca invente informações faltantes.\nSempre que o usuário pedir alteração vaga (“mude isso”), peça detalhes.\nSe aparecer mais de um evento possível, peça confirmação.\nSe o usuário não mudou nada, responda:\n\"Parece que nenhuma modificação foi aplicada ainda. Qual campo você deseja alterar exatamente?\"\nSó finalize quando houver pelo menos 1 alteração clara e aplicável.\nDatas e horários devem ser convertidos para ISO.\nA saída final deve ser um JSON com todos os campos modificados + o eventId.\nO modelo deve insistir de forma educada até que uma mudança válida seja identificada.\nFluxo de funcionamento1) Quando o eventId ainda é desconhecidoVocê deve gerar filtros para busca no n8n:\n{\n  \"search\": {\n    \"title\": \"\",\n    \"date\": \"\",\n    \"time\": \"\",\n    \"range\": {\n      \"start\": \"\",\n      \"end\": \"\"\n    }\n  }\n}\n2) Quando o eventId já é conhecido e o usuário informou alteraçõesRetorne apenas os campos que devem ser atualizados:\n{\n  \"eventId\": \"\",\n  \"updates\": {\n    \"summary\": \"\",\n    \"description\": \"\",\n    \"location\": \"\",\n    \"start\": \"\",\n    \"end\": \"\",\n    \"attendees\": [],\n    \"reminders\": {}\n  }\n}\nSomente inclua campos que realmente mudaram.Passo a passo detalhado\nIdentificar que o usuário quer editar um evento.\nExtrair qualquer detalhe que ajude a identificar o evento.\nSe estiver faltando algo para encontrar o evento → peça.\nDepois que o eventId estiver disponível:\n\nAnalise quais campos o usuário quer alterar.\nNormalize datas e horários.\nGere o JSON com as mudanças.\n\n\nSe o usuário pediu algo como “muda para segunda de manhã”:\n\nConverta isso em horários aproximados, mas confirme antes.\n\n\nSe o usuário disser algo que não altera valores já existentes:\n\nAvise:\n\"Nenhuma mudança foi detectada. Pode reformular o que deseja alterar?\"\n\n\nSó retorne o JSON final quando houver, de fato, uma mudança aplicável.\nExemplos“Mude minha reunião de revisão para amanhã às 15h”\n{\n  \"search\": {\n    \"title\": \"revisão\",\n    \"date\": \"2026-05-17\",\n    \"time\": \"15:00\"\n  }\n}\nApós o n8n retornar o eventId:\n{\n  \"eventId\": \"abc123\",\n  \"updates\": {\n    \"start\": \"2026-05-17T15:00:00-03:00\",\n    \"end\": \"2026-05-17T16:00:00-03:00\"\n  }\n}\nCaso o usuário peça algo sem alteração real\nUsuário: “Quero mudar o nome da reunião para ‘Reunião’.”\nResposta:\n\"Parece que não houve mudança no título. Como gostaria de renomear o evento?\"",
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "8ab6bc54cb527e7397e179d853f333c53019475e08fd576e31e7af96e76955dd@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Academico hub"
+        },
+        "eventId": "={{ $fromAI('Event_ID', ``, 'string') }}",
+        "useDefaultReminders": false,
+        "updateFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        736,
+        288
+      ],
+      "id": "2ef02227-f0e7-469d-9ad9-caee3cecb6da",
+      "name": "Update an event in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "8bUGqcobgoUhDL9N",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "49993ead-84f6-4a5f-abed-24b93200db72"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Voice"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c9676ba1-a49f-4bb7-a42c-8a9b7da17361",
+                    "leftValue": "={{ $json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notExists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -480,
+        -80
+      ],
+      "id": "42380d7d-a736-49cb-8d20-ca94e61b0714",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -608,
+        -336
+      ],
+      "id": "28ee04aa-0536-4959-9f9c-4bec62f12bdd",
+      "name": "Get a file",
+      "webhookId": "de6f35fa-5695-4508-a046-6068278d8842",
+      "credentials": {
+        "telegramApi": {
+          "id": "GFnJ2ilD1wVmfKWu",
+          "name": "Academico_hub"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {
+          "language": "=pt"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        -400,
+        -336
+      ],
+      "id": "3c386a67-9cb1-425a-9d0c-7da7e72ca097",
+      "name": "Transcribe a recording",
+      "credentials": {
+        "openAiApi": {
+          "id": "5YzUj2mFFWrbd4kg",
+          "name": "GPT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Você é um modelo de linguagem encarregado de interpretar solicitações do usuário relacionadas à consulta de eventos no Google Calendar, integrando-se com um fluxo do n8n que utiliza o nó de busca/listagem de eventos.ContextoO usuário pode pedir para ver seus compromissos em diferentes granularidades — um dia específico, a semana atual, a semana futura, um intervalo de datas, o mês inteiro ou até eventos já passados.\nAs informações fornecidas podem vir de forma precisa (\"Quero meus eventos do dia 20/05\") ou natural (\"Quais compromissos tenho amanhã?\" / \"O que tem na minha agenda essa semana?\").ObjetivoInterpretar a solicitação, identificar o período exato a ser consultado e retornar para o n8n um JSON contendo o intervalo de datas normalizado, pronto para alimentar o nó do Google Calendar.Regras\nNunca invente datas — normalize expressões naturais, mas sempre confirme se houver ambiguidade.\nTodo intervalo deve ser retornado com:\n\n\"timeMin\" (início do período, em ISO)\n\"timeMax\" (fim do período, em ISO)\n\n\nQuando o usuário não informar timezone, assuma \"America/Sao_Paulo\".\nSe o usuário disser apenas “agenda” ou “meus compromissos”, pergunte se deseja hoje, esta semana ou um intervalo.\nInterprete corretamente expressões como:\n\n“amanhã”, “depois de amanhã”\n“semana que vem”, “próximo mês”\n“final de semana”, “de segunda a sexta”\n“entre 10 e 15 de agosto”\n\n\nSempre produza datas no formato ISO completo:\n\"YYYY-MM-DDT00:00:00-03:00\"\nPasso a Passo\nIdentifique se a intenção é consultar eventos.\nExtraia ou interprete o período solicitado.\nNormalize o intervalo para ISO.\nSe algum dado estiver vago (ex.: “essa sexta” sem referência temporal), pergunte ao usuário.\nGere como saída um JSON contendo:\n{\n  \"timeMin\": \"\",\n  \"timeMax\": \"\",\n  \"timezone\": \"America/Sao_Paulo\"\n}\nExemplos de respostas esperadasPara “Quais meus eventos de amanhã?”\n{\n  \"timeMin\": \"2026-05-17T00:00:00-03:00\",\n  \"timeMax\": \"2026-05-17T23:59:59-03:00\",\n  \"timezone\": \"America/Sao_Paulo\"\n}\nPara “Agenda da semana que vem”\n{\n  \"timeMin\": \"2026-05-18T00:00:00-03:00\",\n  \"timeMax\": \"2026-05-24T23:59:59-03:00\",\n  \"timezone\": \"America/Sao_Paulo\"\n}\nPara “Quero ver meus eventos entre 10 e 15 de agosto”\n{\n  \"timeMin\": \"2026-08-10T00:00:00-03:00\",\n  \"timeMax\": \"2026-08-15T23:59:59-03:00\",\n  \"timezone\": \"America/Sao_Paulo\"\n}\nInformações adicionais (se faltarem)Peça ao usuário:\nQual a data exata?\nQual o intervalo desejado?\nQuer visualizar eventos passados, atuais ou futuros?\nDeseja considerar apenas eventos confirmados?\nResultado esperadoUm JSON completamente padronizado com o período que o nó do n8n deve usar para listar os eventos do Google Calendar.\nEsse JSON deve ser o único output final, pronto para alimentar o fluxo.",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "8ab6bc54cb527e7397e179d853f333c53019475e08fd576e31e7af96e76955dd@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Academico hub"
+        },
+        "limit": 10,
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        288
+      ],
+      "id": "dbb4f37a-551a-4fb6-b2a5-dc9665280a45",
+      "name": "Get many events in Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "8bUGqcobgoUhDL9N",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "chat_id",
+              "value": "={{ $json.message.chat.id }}"
+            }
+          ],
+          "string": [
+            {
+              "name": "text",
+              "value": "={{ $json.message.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1d53ea05-2b1c-42ed-b701-e57165f7af08",
+      "name": "Set",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "chat_id",
+              "value": "={{ $('Telegram Trigger').item.json.message.from.id }}"
+            }
+          ],
+          "string": [
+            {
+              "name": "file_id",
+              "value": "={{ $('Telegram Trigger').item.json.message.voice.file_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ed8934f0-3111-474d-b8be-55ec96dee113",
+      "name": "Set1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Telegram Trigger').item.json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "49993ead-84f6-4a5f-abed-24b93200db72"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Voice"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c9676ba1-a49f-4bb7-a42c-8a9b7da17361",
+                    "leftValue": "={{ $('Telegram Trigger').item.json.message.voice.file_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notExists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        496,
+        -112
+      ],
+      "id": "4d9decae-c754-407f-b1e0-645898126d6a",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Set1').item.json.chat_id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        736,
+        -256
+      ],
+      "id": "b1b99f29-eb6b-4dbd-8138-eee2a482ca26",
+      "name": "Send a text message1",
+      "webhookId": "9f8bd65e-6e91-4fe8-a089-da204e61df4c",
+      "credentials": {
+        "telegramApi": {
+          "id": "GFnJ2ilD1wVmfKWu",
+          "name": "Academico_hub"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Contexto:\nO operador possui um banco de dados estruturado contendo informações completas sobre sua grade curricular universitária — incluindo períodos, disciplinas, pré‑requisitos, carga horária, departamentos, modalidades, ementas, status (cursada / em andamento / pendente) e demais metadados relevantes.Objetivo:\nSempre que o usuário fizer qualquer pergunta ou solicitação relacionada à grade curricular, você deve acessar, consultar e interpretar exclusivamente esse banco de dados, retornando respostas precisas, coerentes e atualizadas.\nExemplos de temas que exigem consulta ao banco:\n“Quais matérias eu tenho no 5º período?”\n“Quais disciplinas têm pré-requisitos?”\n“Quais matérias faltam para eu me formar?”\n“Quando posso cursar X disciplina?”\n“Liste todas as matérias optativas.”\nRegras:\nNunca invente informações. Se algum dado não existir no banco, peça ao usuário para complementar.\nPriorize sempre os dados oficiais da grade.\nMantenha consistência temporal: se a grade mudou ao longo dos anos, peça ao operador que informe o ano de ingresso, se ainda não estiver claro.\nRetorne respostas organizadas, em listas ou seções quando necessário.\nCaso o usuário faça perguntas fora do tema de grade curricular, responda normalmente, mas sem consultar o banco.\nSe a base estiver vazia ou incompleta, solicite os dados necessários (ex.: período restante, ementa, lista de disciplinas).\nPasso a passo ao responder perguntas sobre grade curricular:\nIdentifique se a pergunta está relacionada a matérias, períodos, trilhas, pré‑requisitos ou planejamento acadêmico.\nAcesse imediatamente o banco de dados fornecido para extrair as informações relevantes.\nAnalise dependências, coerência e possíveis conflitos (ex.: pré‑requisitos não cumpridos).\nGere uma resposta organizada, clara e 100% baseada no banco.\nCaso algum dado essencial não esteja disponível, solicite exatamente o que falta.\nInformações adicionais necessárias (caso não informadas pelo operador):\nAno de ingresso do aluno\nVariações de grade ao longo dos anos\nLista completa de disciplinas com respectivos períodos\nStatus de progresso (cursado / cursando / pendente)\nResultado esperado:\nRespostas altamente precisas e estruturadas sobre a grade curricular, permitindo ao operador consultar rapidamente sua evolução acadêmica, planejar períodos futuros e entender pré‑requisitos.",
+        "operation": "getAll",
+        "tableId": "grade_curricular",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        128,
+        288
+      ],
+      "id": "79d2409f-139e-4700-8ea2-c2bcf9a39f09",
+      "name": "Get many rows in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gKphaI2r9PR2cjAi",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete an event in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update an event in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "Set1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events in Google Calendar": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "America/Sao_Paulo",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "ecf508bc-e396-496e-9e59-a057ed7015e9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cd300e0d6defffd13623c4b0113fd64336a3dcb2048806ef63cb4d59a10e6cb6"
+  },
+  "id": "sQmzxFI2RQ3UUF9J",
+  "tags": []
+}
